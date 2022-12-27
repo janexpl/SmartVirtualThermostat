@@ -26,7 +26,7 @@ Version: 0.4.10 (November 25, 2020) - see history.txt for versions history
         <param field="Mode2" label="Outside Temperature Sensors (csv list of idx)" width="100px" required="false" default=""/>
         <param field="Mode3" label="Heating Switches (csv list of idx)" width="100px" required="true" default="0"/>
         <param field="Mode4" label="Apply minimum heating per cycle" width="200px">
-            <options>
+          <options>
 				<option label="ony when heating required" value="Normal"  default="true" />
                 <option label="always" value="Forced"/>
             </options>
@@ -44,6 +44,10 @@ Version: 0.4.10 (November 25, 2020) - see history.txt for versions history
                 <option label="Debug - All" value="-1"/>
             </options>
         </param>
+        <param field="Mode7" label="OpenWeather API Key" width="200px" required="true" default=""/>
+        <param field="Mode8" label="Location Lat/Lon" width="200px" required="true" default=""/>
+        <param field="Mode9" label="Hour of first calculate and start" width="200px" required="true" default="03:00"/>
+        
     </params>
 </plugin>
 """
@@ -107,6 +111,9 @@ class BasePlugin:
         self.loglevel = None
         self.statussupported = True
         self.intemperror = False
+        self.lat = None
+        self.lon = None
+        self.hour = datetime.
         return
 
 
@@ -178,7 +185,14 @@ class BasePlugin:
         # build dict of status of all temp sensors to be used when handling timeouts
         for sensor in itertools.chain(self.InTempSensors, self.OutTempSensors):
             self.ActiveSensors[sensor] = True
-
+        
+        latlon = parseCSV(Parameters["Mode8"])
+        if len(latlon) = 2:
+            self.lat = CheckParam("Lat", params[0], 52.237)
+            self.lon = CheckParam("Lon", params[1], 21.017)
+        else:
+            Domoticz.Error("Lat/lon data missing")
+        
         # splits additional parameters
         params = parseCSV(Parameters["Mode5"])
         if len(params) == 5 or len(params) == 6:
@@ -653,6 +667,16 @@ def parseCSV(strCSV):
         i+=1
     return listvals
 
+def OpenWeatherAPI():
+    resultJson = None
+    url = "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&appid={}&units=metric".format(self.lat, self.lon, Parameters["Mode7"]) 
+    Domoticz.Debug("Calling openweater API: {}".format(url))
+    try:
+        req = request.Request(url)
+        response = request.Request(url)
+        if response.status == 200:
+            resultJson = json.loads(response.read().decode('utf-8'))
+            
 
 def DomoticzAPI(APICall):
 
