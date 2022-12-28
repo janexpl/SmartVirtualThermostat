@@ -93,6 +93,8 @@ class BasePlugin:
             'LastOutT': float(0),  # outside temprature at last calculation
             'LastSetPoint': float(20),  # setpoint at time of last calculation
             'ALStatus': 0}  # AutoLearning status (0 = uninitialized, 1 = initialized, 2 = disabled)
+            'DateCalculated': "",
+            'TempCalculated': float(20),
         self.Internals = self.InternalsDefaults.copy()
         self.heat = False
         self.pause = False
@@ -113,7 +115,7 @@ class BasePlugin:
         self.intemperror = False
         self.lat = None
         self.lon = None
-        self.hour = datetime.
+        self.hour = datetime.now()
         return
 
 
