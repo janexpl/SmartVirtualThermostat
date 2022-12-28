@@ -7,7 +7,7 @@ Author: Logread,
 Version: 0.4.10 (November 25, 2020) - see history.txt for versions history
 """
 """
-<plugin key="SVT" name="Smart Virtual Thermostat with Forecast" author="logread" version="0.4.11" wikilink="https://www.domoticz.com/wiki/Plugins/Smart_Virtual_Thermostat.html" externallink="https://github.com/999LV/SmartVirtualThermostat.git">
+<plugin key="SVTFORECAST" name="Smart Virtual Thermostat with Forecast" author="logread" version="0.4.11" wikilink="https://www.domoticz.com/wiki/Plugins/Smart_Virtual_Thermostat.html" externallink="https://github.com/999LV/SmartVirtualThermostat.git">
     <description>
         <h2>Smart Virtual Thermostat With Forecast</h2><br/>
         Easily implement in Domoticz an advanced virtual thermostat based on time modulation<br/>
