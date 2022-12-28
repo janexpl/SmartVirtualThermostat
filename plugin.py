@@ -191,7 +191,7 @@ class BasePlugin:
             self.ActiveSensors[sensor] = True
         
         latlon = parseCSV(Parameters["Mode8"])
-        if len(latlon) = 2:
+        if len(latlon) == 2:
             self.lat = CheckParam("Lat", params[0], 52.237)
             self.lon = CheckParam("Lon", params[1], 21.017)
         else:
@@ -648,7 +648,11 @@ class BasePlugin:
                 wind = result["wind"]["speed"]
                 clouds = result["clouds"]["all"]
                 self.averge = (max_temp+min_temp)/2
-                self.calculationdate = datetime.now() 
+                self.calculationdate = datetime.now()
+                self.Parameters["TempCalculated"] = self.averge
+                self.Parameters["DateCalculated"] = self.calculationdate
+                self.saveUserVar()
+
                 Domoticz.Debug("Calculate daily avarge temperature: min_temp: {}, max_temp: {}, wind: {}, clouds: {}".format(min_temp,max_temp,wind,clouds))
         except:
             Domoticz.Error("Unable to calculate averge temperature")
