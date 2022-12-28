@@ -44,9 +44,6 @@ Version: 0.4.10 (November 25, 2020) - see history.txt for versions history
                 <option label="Debug - All" value="-1"/>
             </options>
         </param>
-        <param field="Mode7" label="OpenWeather API Key" width="200px" required="true" default=""/>
-        <param field="Mode8" label="Location Lat/Lon" width="200px" required="true" default=""/>
-        <param field="Mode9" label="Hour of first calculate and start" width="200px" required="true" default="03:00"/>
         
     </params>
 </plugin>
@@ -190,13 +187,13 @@ class BasePlugin:
         for sensor in itertools.chain(self.InTempSensors, self.OutTempSensors):
             self.ActiveSensors[sensor] = True
         
-        latlon = parseCSV(Parameters["Mode8"])
-        if len(latlon) == 2:
-            self.lat = CheckParam("Lat", params[0], 52.237)
-            self.lon = CheckParam("Lon", params[1], 21.017)
-        else:
-            Domoticz.Error("Lat/lon data missing")
-        
+        # latlon = parseCSV(Parameters["Mode8"])
+        # if len(latlon) == 2:
+        #     self.lat = CheckParam("Lat", params[0], 52.237)
+        #     self.lon = CheckParam("Lon", params[1], 21.017)
+        # else:
+        #     Domoticz.Error("Lat/lon data missing")
+        # 
         # splits additional parameters
         params = parseCSV(Parameters["Mode5"])
         if len(params) == 5 or len(params) == 6:
@@ -649,8 +646,8 @@ class BasePlugin:
                 clouds = result["clouds"]["all"]
                 self.averge = (max_temp+min_temp)/2
                 self.calculationdate = datetime.now()
-                self.Parameters["TempCalculated"] = self.averge
-                self.Parameters["DateCalculated"] = self.calculationdate
+                self.Internals["TempCalculated"] = self.averge
+                self.Internals["DateCalculated"] = self.calculationdate
                 self.saveUserVar()
 
                 Domoticz.Debug("Calculate daily avarge temperature: min_temp: {}, max_temp: {}, wind: {}, clouds: {}".format(min_temp,max_temp,wind,clouds))
@@ -705,7 +702,7 @@ def parseCSV(strCSV):
 
 def OpenWeatherAPI():
     resultJson = None
-    url = "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&appid={}&units=metric".format(self.lat, self.lon, Parameters["Mode7"]) 
+    url = "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&appid={}&units=metric".format("52.08","20.40", "6ec1b79733c827a4f237a2300329424c") 
     Domoticz.Debug("Calling openweater API: {}".format(url))
     try:
         req = request.Request(url)
