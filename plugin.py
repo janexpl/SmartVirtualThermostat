@@ -90,7 +90,7 @@ class BasePlugin:
             'LastOutT': float(0),  # outside temprature at last calculation
             'LastSetPoint': float(20),  # setpoint at time of last calculation
             'ALStatus': 0,  # AutoLearning status (0 = uninitialized, 1 = initialized, 2 = disabled)
-            'DateCalculated': None,
+            'DateCalculated': datetime.now(),
             'TempCalculated': float(20)}
         self.Internals = self.InternalsDefaults.copy()
         self.heat = False
@@ -130,9 +130,9 @@ class BasePlugin:
             Domoticz.Debugging(debuglevel)
             DumpConfigToLog()
             self.loglevel = "Verbose"
-            Domoticz.Log("Debugger started, use 'telnet 0.0.0.0 4444' to connect")
-            import rpdb
-            rpdb.set_trace()
+            # Domoticz.Log("Debugger started, use 'telnet 0.0.0.0 4444' to connect")
+            # import rpdb
+            # rpdb.set_trace()
         else:
             self.debug = False
             Domoticz.Debugging(0)
@@ -351,7 +351,7 @@ class BasePlugin:
     def AutoMode(self):
 
         now = datetime.now()
-        if timedelta.total_seconds(now - self.Internals["DateCalculated"]) >= 24*60*60:
+        if timedelta.total_seconds(now - self.Internals["DateCalculated"]) >= 24*60*60 or self.Internals["DateCalculated"] == None:
             self.calculateAvergeTemp()
             if self.averge <= 0:
                 self.calculate_period = 480 
@@ -639,6 +639,7 @@ class BasePlugin:
         return timedout
 
     def calculateAvergeTemp(self):
+        Domoticz.Debug("Try to calculate temperatures")
         result = None
         try:
             result = OpenWeatherAPI()
@@ -705,7 +706,7 @@ def parseCSV(strCSV):
 
 def OpenWeatherAPI():
     resultJson = None
-    url = "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&appid={}&units=metric".format("52.08","20.40", "6ec1b79733c827a4f237a2300329424c") 
+    url = "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&appid={}&units=metric".format("","", "") 
     Domoticz.Debug("Calling openweater API: {}".format(url))
     try:
         req = request.Request(url)
