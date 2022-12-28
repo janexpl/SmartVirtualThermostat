@@ -92,9 +92,9 @@ class BasePlugin:
             'LastInT': float(0),  # inside temperature at last calculation
             'LastOutT': float(0),  # outside temprature at last calculation
             'LastSetPoint': float(20),  # setpoint at time of last calculation
-            'ALStatus': 0}  # AutoLearning status (0 = uninitialized, 1 = initialized, 2 = disabled)
-            'DateCalculated': "",
-            'TempCalculated': float(20),
+            'ALStatus': 0,  # AutoLearning status (0 = uninitialized, 1 = initialized, 2 = disabled)
+            'DateCalculated': datetime.now(),
+            'TempCalculated': float(20)}
         self.Internals = self.InternalsDefaults.copy()
         self.heat = False
         self.pause = False
@@ -116,6 +116,8 @@ class BasePlugin:
         self.lat = None
         self.lon = None
         self.hour = datetime.now()
+        self.averge = 0.0
+        self.calculationdate = datetime.now()
         return
 
 
@@ -347,6 +349,17 @@ class BasePlugin:
 
 
     def AutoMode(self):
+
+        now = datetime.now()
+        if timedelta(total_hours(now - self.Internals["DateCalculated"])) >= 24:
+            self.calculateAvergeTemp()
+            if self.averge <= 0:
+                self.calculate_period = 480 
+            if self.averge > 0 and self.averge <= 10:
+                self.calculate_period = 720
+            if self.averge > 10 and self.averge >= 15:
+                self.calculate_period = 1440
+                        
 
         self.WriteLog("Temperatures: Inside = {} / Outside = {}".format(self.intemp, self.outtemp), "Verbose")
 
@@ -625,6 +638,23 @@ class BasePlugin:
 
         return timedout
 
+    def calculateAvergeTemp(self):
+        result = None
+        try:
+            result = OpenWeatherAPI()
+            if result != None:
+                min_temp = result["main"]["temp_min"]
+                max_temp = result["main"]["temp_max"]
+                wind = result["wind"]["speed"]
+                clouds = result["clouds"]["all"]
+                self.averge = (max_temp+min_temp)/2
+                self.calculationdate = datetime.now() 
+                Domoticz.Debug("Calculate daily avarge temperature: min_temp: {}, max_temp: {}, wind: {}, clouds: {}".format(min_temp,max_temp,wind,clouds))
+        except:
+            Domoticz.Error("Unable to calculate averge temperature")
+
+
+
 
 global _plugin
 _plugin = BasePlugin()
@@ -675,10 +705,12 @@ def OpenWeatherAPI():
     Domoticz.Debug("Calling openweater API: {}".format(url))
     try:
         req = request.Request(url)
-        response = request.Request(url)
+        response = request.urlopen(url)
         if response.status == 200:
             resultJson = json.loads(response.read().decode('utf-8'))
-            
+    except:
+        Domoticz.Error("Error calling '{}'".format(url))
+    return resultJson 
 
 def DomoticzAPI(APICall):
 
