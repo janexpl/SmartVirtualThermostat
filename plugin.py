@@ -90,7 +90,7 @@ class BasePlugin:
             'LastOutT': float(0),  # outside temprature at last calculation
             'LastSetPoint': float(20),  # setpoint at time of last calculation
             'ALStatus': 0,  # AutoLearning status (0 = uninitialized, 1 = initialized, 2 = disabled)
-            'DateCalculated': datetime.now(),
+            'DateCalculated': None,
             'TempCalculated': float(20)}
         self.Internals = self.InternalsDefaults.copy()
         self.heat = False
