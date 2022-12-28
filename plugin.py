@@ -1,5 +1,5 @@
 """
-Smart Virtual Thermostat python plugin for Domoticz
+Smart Virtual Thermostat with calculation periods predicted on forecast python plugin for Domoticz
 Author: Logread,
         adapted from the Vera plugin by Antor, see:
             http://www.antor.fr/apps/smart-virtual-thermostat-eng-2/?lang=en
@@ -9,7 +9,7 @@ Version: 0.4.10 (November 25, 2020) - see history.txt for versions history
 """
 <plugin key="SVT" name="Smart Virtual Thermostat" author="logread" version="0.4.11" wikilink="https://www.domoticz.com/wiki/Plugins/Smart_Virtual_Thermostat.html" externallink="https://github.com/999LV/SmartVirtualThermostat.git">
     <description>
-        <h2>Smart Virtual Thermostat</h2><br/>
+        <h2>Smart Virtual Thermostat With Forecast</h2><br/>
         Easily implement in Domoticz an advanced virtual thermostat based on time modulation<br/>
         and self learning of relevant room thermal characteristics (including insulation level)<br/>
         rather then more conventional hysteresis methods, so as to achieve a greater comfort.<br/>
