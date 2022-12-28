@@ -130,6 +130,9 @@ class BasePlugin:
             Domoticz.Debugging(debuglevel)
             DumpConfigToLog()
             self.loglevel = "Verbose"
+            Domoticz.Log("Debugger started, use 'telnet 0.0.0.0 4444' to connect")
+            import rpdb
+            rpdb.set_trace()
         else:
             self.debug = False
             Domoticz.Debugging(0)
