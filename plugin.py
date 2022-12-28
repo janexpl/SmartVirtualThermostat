@@ -351,7 +351,7 @@ class BasePlugin:
     def AutoMode(self):
 
         now = datetime.now()
-        if timedelta(total_hours(now - self.Internals["DateCalculated"])) >= 24:
+        if timedelta.total_seconds(now - self.Internals["DateCalculated"]) >= 24*60*60:
             self.calculateAvergeTemp()
             if self.averge <= 0:
                 self.calculate_period = 480 
