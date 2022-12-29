@@ -56,6 +56,8 @@ import time
 import base64
 import itertools
 from distutils.version import LooseVersion
+import pathlib
+import configparser
 
 class deviceparam:
 
@@ -90,8 +92,8 @@ class BasePlugin:
             'LastOutT': float(0),  # outside temprature at last calculation
             'LastSetPoint': float(20),  # setpoint at time of last calculation
             'ALStatus': 0,  # AutoLearning status (0 = uninitialized, 1 = initialized, 2 = disabled)
-            'DateCalculated': datetime.now(),
-            'TempCalculated': float(20)}
+            'DateCalculated': "",
+            'LastCalcPeriod': 720}
         self.Internals = self.InternalsDefaults.copy()
         self.heat = False
         self.pause = False
@@ -115,6 +117,9 @@ class BasePlugin:
         self.hour = datetime.now()
         self.averge = 0.0
         self.calculationdate = datetime.now()
+        self.apikey = ""
+        self.lat = 0.0
+        self.lon = 0.0
         return
 
 
@@ -142,7 +147,8 @@ class BasePlugin:
             Domoticz.Status("This version of domoticz allows status logging by the plugin (in verbose mode)")
         except Exception:
             self.statussupported = False
-
+        
+        Domoticz.Debug(pathlib.Path(__file__).parent.resolve())
         # create the child devices if these do not exist yet
         devicecreated = []
         if 1 not in Devices:
@@ -225,7 +231,9 @@ class BasePlugin:
         # note: to reset the thermostat to default values (i.e. ignore all past learning),
         # just delete the relevant "<plugin name>-InternalVariables" user variable Domoticz GUI and restart plugin
         self.getUserVar()
-
+        self.getConfigVar()
+        self.calculate_period = self.Internals["LastCalcPeriod"]
+    
         # if mode = off then make sure actual heating is off just in case if was manually set to on
         if Devices[1].sValue == "0":
             self.switchHeat(False)
@@ -349,16 +357,25 @@ class BasePlugin:
 
 
     def AutoMode(self):
-
-        now = datetime.now()
-        if timedelta.total_seconds(now - self.Internals["DateCalculated"]) >= 24*60*60 or self.Internals["DateCalculated"] == None:
+        if self.Internals["DateCalculated"] != "":
+            date = datetime.strptime(self.Internals["DateCalculated"], "%Y-%m-%d")
+        else:
+            date = datetime.today()
+        Domoticz.Debug("Last date: {}".format(date))
+        today = datetime.today()
+        Domoticz.Debug("Current date: {}".format(today))
+        d = timedelta(days=1)
+        diff = today - date
+        if d <= diff:
+            Domoticz.Debug("Calculate")
             self.calculateAvergeTemp()
-            if self.averge <= 0:
+            if self.averge <= 0.0:
                 self.calculate_period = 480 
-            if self.averge > 0 and self.averge <= 10:
+            if self.averge > 0.0 and self.averge <= 10.0:
                 self.calculate_period = 720
-            if self.averge > 10 and self.averge >= 15:
+            if self.averge > 10.0 and self.averge >= 15.0:
                 self.calculate_period = 1440
+        Domoticz.Debug("Averge temperature: {}, calculate_period: {}".format(self.averge, self.calculate_period))
                         
 
         self.WriteLog("Temperatures: Inside = {} / Outside = {}".format(self.intemp, self.outtemp), "Verbose")
@@ -389,7 +406,7 @@ class BasePlugin:
             self.WriteLog(
                 "Calculated power is {}, applying minimum power of {}".format(power, self.minheatpower), "Verbose")
             power = self.minheatpower
-
+        Domoticz.Debug("Calculate Period before heatduration: {}".format(self.calculate_period))
         heatduration = round(power * self.calculate_period / 100)
         self.WriteLog("Calculation: Power = {} -> heat duration = {} minutes".format(power, heatduration), "Verbose")
 
@@ -406,6 +423,7 @@ class BasePlugin:
                 self.Internals['LastOutT'] = self.outtemp
                 self.Internals['LastSetPoint'] = self.setpoint
                 self.Internals['ALStatus'] = 1
+                self.Internals['LastCalcPeriod'] = self.calculate_period
                 self.saveUserVar()  # update user variables with latest learning
 
         self.lastcalc = datetime.now()
@@ -546,6 +564,13 @@ class BasePlugin:
         Domoticz.Debug("Outside Temperature = {}".format(self.outtemp))
         return noerror
 
+    def getConfigVar(self):
+        config = configparser.ConfigParser()
+        config.read('{}/config.ini'.format(pathlib.Path(__file__).parent.resolve()))
+        Domoticz.Debug(config)
+        self.apikey = config['openweather']['ApiKey']
+        self.lat = config['openweather']['Lat']
+        self.lon = config['openweather']['Lon']
 
     def getUserVar(self):
 
@@ -596,7 +621,7 @@ class BasePlugin:
 
 
     def saveUserVar(self):
-
+        Domoticz.Debug("Saving internals: {}".format(str(self.Internals)))
         varname = Parameters["Name"] + "-InternalVariables"
         DomoticzAPI("type=command&param=updateuservariable&vname={}&vtype=2&vvalue={}".format(
             varname, str(self.Internals)))
@@ -642,16 +667,19 @@ class BasePlugin:
         Domoticz.Debug("Try to calculate temperatures")
         result = None
         try:
-            result = OpenWeatherAPI()
+            result = OpenWeatherAPI(self.apikey, self.lat, self.lon)
             if result != None:
                 min_temp = result["main"]["temp_min"]
                 max_temp = result["main"]["temp_max"]
                 wind = result["wind"]["speed"]
                 clouds = result["clouds"]["all"]
                 self.averge = (max_temp+min_temp)/2
-                self.calculationdate = datetime.now()
-                self.Internals["TempCalculated"] = self.averge
-                self.Internals["DateCalculated"] = self.calculationdate
+                windkmh = wind/(1000/3600)
+                self.averge = 13.12+0.6125*self.averge-(11.37*(windkmh**0.16))+0.3965*self.averge*(windkmh**0.16)
+                # self.averge = -10.0
+                self.calculationdate = datetime.today()
+                self.Internals["DateCalculated"] = self.calculationdate.strftime("%Y-%m-%d")
+                Domoticz.Debug(self.Internals)
                 self.saveUserVar()
 
                 Domoticz.Debug("Calculate daily avarge temperature: min_temp: {}, max_temp: {}, wind: {}, clouds: {}".format(min_temp,max_temp,wind,clouds))
@@ -704,9 +732,9 @@ def parseCSV(strCSV):
         i+=1
     return listvals
 
-def OpenWeatherAPI():
+def OpenWeatherAPI(apikey, lat, lon):
     resultJson = None
-    url = "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&appid={}&units=metric".format("","", "") 
+    url = "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&appid={}&units=metric".format(lat,lon,apikey) 
     Domoticz.Debug("Calling openweater API: {}".format(url))
     try:
         req = request.Request(url)
