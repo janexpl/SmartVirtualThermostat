@@ -15,7 +15,7 @@ Version: 0.4.10 (November 25, 2020) - see history.txt for versions history
         rather then more conventional hysteresis methods, so as to achieve a greater comfort.<br/>
         It is a port to Domoticz of the original Vera plugin from Antor.<br/>
         <h3>Set-up and Configuration</h3>
-        See domoticz wiki above.<br/> 
+        See domoticz wiki above.<br/>
     </description>
     <params>
         <param field="Address" label="Domoticz IP Address" width="200px" required="true" default="localhost"/>
@@ -271,7 +271,8 @@ class BasePlugin:
     def onHeartbeat(self):
 
         now = datetime.now()
-        
+        # hour = now.time()
+        # firststart = datetime.strptime(self.firststart, '%H:%M').time()
         # fool proof checking.... based on users feedback
         if not all(device in Devices for device in (1,2,3,4,5,6)):
             Domoticz.Error("one or more devices required by the plugin is/are missing, please check domoticz device creation settings and restart !")
@@ -375,11 +376,9 @@ class BasePlugin:
                 self.calculate_period = 720
             if self.averge > 10.0 and self.averge >= 15.0:
                 self.calculate_period = 1440
-        Domoticz.Debug("Averge temperature: {}, calculate_period: {}".format(self.averge, self.calculate_period))
+        self.WriteLog("Averge temperature: {}, calculate_period: {}".format(self.averge, self.calculate_period), "Verbose")
                         
-
         self.WriteLog("Temperatures: Inside = {} / Outside = {}".format(self.intemp, self.outtemp), "Verbose")
-
         if self.intemp > self.setpoint + self.deltamax:
             self.WriteLog("Temperature exceeds setpoint", "Verbose")
             overshoot = True
